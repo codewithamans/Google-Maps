@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import Destination from "./images/Destination.png";
+import Ellipse from "./images/Ellipse.png";
 import {
   useJsApiLoader,
   GoogleMap,
@@ -21,28 +23,34 @@ const Main = () => {
   const [stops, setStops] = useState([]);
   const originref = useRef();
   const stopsRef = useRef();
-  const destinationnref = useRef();
+  const destinationref = useRef();
   const isLoaded = useJsApiLoader({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
     libraries: ["places"],
   });
   const addStop = () => {
-    if (stopsRef.current.value === "") {
-      return;
-    }
     const newStop = stopsRef.current.value;
-    setStops((prevStops) => [...prevStops, newStop]);
+    if (newStop !== "" && !stops.includes(newStop)) {
+      setStops([...stops, newStop]);
+
+      // Update the map with the new stops
+      // calculateDistance();
+    }
     stopsRef.current.value = "";
   };
+
   const removeStop = (index) => {
     setStops((prevStops) => prevStops.filter((_, i) => i !== index));
+    calculateDistance();
   };
-
+  useEffect(() => {
+    calculateDistance();
+  }, [stops]);
   const calculateDistance = async () => {
-    if (
-      originref.current.value === "" ||
-      destinationnref.current.value === ""
-    ) {
+    if (!originref.current || !destinationref.current) {
+      return;
+    }
+    if (originref.current.value === "" || destinationref.current.value === "") {
       return;
     }
     setstopState(true);
@@ -50,7 +58,7 @@ const Main = () => {
     const waypoints = stops.map((stop) => ({ location: stop, stopover: true }));
     const results = await direction.route({
       origin: originref.current.value,
-      destination: destinationnref.current.value,
+      destination: destinationref.current.value,
       travelMode: transitMode,
       waypoints: waypoints,
     });
@@ -69,7 +77,7 @@ const Main = () => {
     setdistance("");
     setstate(false);
     originref.current.value = "";
-    destinationnref.current.value = "";
+    destinationref.current.value = "";
     setStops([]);
     setstopState(false);
   };
@@ -82,7 +90,7 @@ const Main = () => {
       >
         <div className="w-full flex justify-center bg-blue-50">
           <div className="w-full md:w-4/5 ">
-            <div className="w-full font-sans text-[#1B31A8] text-center my-8">
+            <div className="w-full font-sans hidden md:block text-[#1B31A8] text-center my-8">
               Let's calculate <span className="font-bold">distance</span> from
               Google maps
             </div>
@@ -90,30 +98,50 @@ const Main = () => {
               <div className=" order-2 lg:order-1">
                 <div className="grid md:grid-cols-2">
                   <div className="">
-                    <div className="my-4 mx-4 md:mx-0">
-                      <h1 className="my-1 font-sans">Origin</h1>
+                    <div className="my-12 md:my-4 mx-4 md:mx-0">
+                      <h1 className="my-1 font-sans hidden md:block">Origin</h1>
                       <Autocomplete>
-                        <input
-                          type="text"
-                          ref={originref}
-                          class="bg-gray-50 border  border-gray-300 text-gray-900 text-sm rounded-lg   p-2.5"
-                          placeholder="Origin"
-                        />
+                        <div class="relative mb-6">
+                          <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <div className="w-3 h-3 rounded-full bg-green-400 p-[6px] border border-black"></div>
+                          </div>
+                          <input
+                            type="text"
+                            ref={originref}
+                            class="w-full md:w-[250px] h-[45px] bg-white border font-bold border-gray-300 text-black text-sm rounded-lg f block  pl-8 p-2.5  "
+                            placeholder="Origin"
+                          />
+                        </div>
                       </Autocomplete>
                     </div>
                     {stopState && (
                       <Autocomplete>
                         <div className="my-4 mx-4 md:mx-0">
-                          <h1 className="my-1 font-sans">Stops</h1>
+                          <h1 className="my-1 font-sans font-semibold hidden md:block">
+                            Stop
+                          </h1>
                           {stops.map((stop, index) => (
                             <div key={index} className=" mb-2 ">
-                              <input
-                                type="text"
-                                value={stop}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 mr-2"
-                                readOnly
-                              />
-                              <div className="flex  items-center ml-20">
+                              <div class="relative ">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                  <div>
+                                    <img
+                                      src={Ellipse}
+                                      alt=""
+                                      srcset=""
+                                      width="15"
+                                      height="15"
+                                    />
+                                  </div>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={stop}
+                                  class="w-full md:w-[250px] h-[45px] bg-white border font-bold border-gray-300 text-black text-sm rounded-lg f block  pl-8 p-2.5  "
+                                  placeholder="Stop"
+                                />
+                              </div>
+                              <div className="flex  items-center ml-[14rem] md:ml-[8rem]">
                                 <AiFillDelete
                                   size={20}
                                   className=" m-2 "
@@ -124,17 +152,33 @@ const Main = () => {
                             </div>
                           ))}
                           <div className="">
-                            <input
-                              type="text"
-                              ref={stopsRef}
-                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 mr-2"
-                              placeholder="Add a stop"
-                            />
-                            <div className="flex  items-center ml-20">
+                            <div class="relative ">
+                              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <div>
+                                  <img
+                                    src={Ellipse}
+                                    alt=""
+                                    srcset=""
+                                    width="15"
+                                    height="15"
+                                  />
+                                </div>
+                              </div>
+                              <input
+                                type="text"
+                                ref={stopsRef}
+                                class="w-full md:w-[250px] h-[45px] bg-white border font-bold border-gray-300 text-black text-sm rounded-lg f block  pl-8 p-2.5  "
+                                placeholder="Stop"
+                              />
+                            </div>
+                            <div className="flex  items-center ml-[14rem] md:ml-[8rem]">
                               <AiOutlinePlusCircle
                                 size={20}
                                 className=" m-2"
-                                onClick={addStop}
+                                onClick={() => {
+                                  addStop();
+                                  calculateDistance();
+                                }}
                               />
                               <p> Add Stop </p>
                             </div>
@@ -144,26 +188,43 @@ const Main = () => {
                     )}
 
                     <div className="my-4 mx-4 md:mx-0">
-                      <h1 className="my-1 font-sans">Destination</h1>
+                      <h1 className="my-1 font-sans hidden md:block">
+                        Destination
+                      </h1>
                       <Autocomplete>
-                        <input
-                          type="text"
-                          ref={destinationnref}
-                          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg   p-2.5"
-                          placeholder="Destination"
-                        />
+                        <div class="relative mb-6">
+                          <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <div>
+                              <img
+                                src={Destination}
+                                alt=""
+                                srcset=""
+                                width="15"
+                                height="15"
+                              />
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            ref={destinationref}
+                            class="w-full md:w-[250px] h-[45px] bg-white border font-bold border-gray-300 text-black text-sm rounded-lg f block  pl-8 p-2.5  "
+                            placeholder="Destination"
+                          />
+                        </div>
                       </Autocomplete>
                     </div>
                   </div>
                   <div className="flex justify-center mt-4 md:mt-0 items-center">
                     <button
-                      className="bg-[#1B31A8] text-white rounded-full px-8 py-4"
-                      onClick={calculateDistance}
+                      className="bg-[#1B31A8] md:ml-20 text-white rounded-full py-2 px-8  md:py-4"
+                      onClick={() => {
+                        calculateDistance();
+                      }}
                     >
                       Calculate
                     </button>
                     <button
-                      className="bg-[#1B31A8] mx-2 text-white rounded-full px-8 py-4"
+                      className="bg-[#1B31A8] mx-2 text-white rounded-full py-2 px-8  md:py-4"
                       onClick={clearRoutes}
                     >
                       Clear
@@ -171,27 +232,31 @@ const Main = () => {
                   </div>
                 </div>
                 <div>
-                  <div className="flex  border-gray-300 border rounded-lg justify-between px-8 items-center w-full mt-12 md:mt-20 h-20 bg-white">
-                    <div className="text-black font-bold text-2xl">
-                      Distance
+                  <div className="border-gray-300 border m-4 rounded-[8px] mt-12">
+                    <div className="flex   justify-between px-8 items-center    h-20 bg-white">
+                      <div className="text-black font-bold text-2xl">
+                        Distance
+                      </div>
+                      <div className="text-[#0079FF] text-2xl md:text-3xl font-bold">
+                        {(distance / 1000).toFixed(2)} km
+                      </div>
                     </div>
-                    <div className="text-[#0079FF] text-2xl md:text-3xl font-bold">
-                      {(distance / 1000).toFixed(2)} km
-                    </div>
-                  </div>
 
-                  {state && (
-                    <div className="w-full border-gray-300 py-4 px-2 border rounded-lg">
-                      <p>
-                        The distance between
-                        <span className="font-bold">{` ${originref.current.value} `}</span>
-                        and
-                        <span className="font-bold">{` ${destinationnref.current.value} `}</span>
-                        via the selected route is {(distance / 1000).toFixed(2)}{" "}
-                        km
-                      </p>
-                    </div>
-                  )}
+                    {state && (
+                      <div className="w-full text-sm p-8">
+                        <p>
+                          The distance between
+                          <span className="font-bold">{` ${originref.current.value} `}</span>
+                          and
+                          <span className="font-bold">{` ${destinationref.current.value} `}</span>
+                          via the selected route is
+                          <span className="font-bold">
+                            {` ${(distance / 1000).toFixed(2)}`} km
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="my-4 md:my-8 flex">
                   <div className="font-bold text-2xl md:text-3xl px-3">
@@ -202,7 +267,7 @@ const Main = () => {
                   </div>
                 </div>
               </div>
-              <div className="w-full h-[20rem] lg:h-full lg:order-2">
+              <div className="w-full h-[20rem] lg:h-[40rem] lg:order-2">
                 {isLoaded && (
                   <GoogleMap
                     center={center}
